@@ -12,13 +12,28 @@ public class BoardNetwork : Board
     public override void OnStartServer()
     {
         FillBoardList(boardList);
-
+        PieceMovementHandlerNetwork.ServerOnPieceReachedBackline += TryPromotePieceOnBoard;
     }
 
+    private bool TryPromotePieceOnBoard(PiecePromotionHandler handler, int x, int z)
+    {
+        PromotePieceOnBoard(BoardList, x, z);
+        RpcPromotePieceOnBoard(x, z);
+        return true;
+    }
+    [ClientRpc]
+    void RpcPromotePieceOnBoard(int x, int z)
+    {
+        if (NetworkServer.active)
+        {
+            return;
+        }
+        PromotePieceOnBoard(BoardList, x, z);
+    }
     [Server]
     public override void MoveOnBoard(Vector2Int oldPosition, Vector2Int newPosition, bool nextTurn)
     {
-        base.MoveOnBoard(oldPosition, newPosition, nextTurn);
+        MoveOnBoard(BoardList, oldPosition, newPosition);
         RpcMoveOnBoard(oldPosition, newPosition, nextTurn);
     }
 
@@ -31,7 +46,7 @@ public class BoardNetwork : Board
         }
         else
         {
-            MoveOnBoard(oldPosition, newPosition, nextTurn);
+            MoveOnBoard(BoardList, oldPosition, newPosition);
             if (nextTurn)
             {
                 NetworkClient.connection.identity.GetComponent<PlayerNetwork>().CmdNextTurn();

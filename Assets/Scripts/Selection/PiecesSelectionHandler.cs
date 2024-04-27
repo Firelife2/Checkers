@@ -42,7 +42,10 @@ public class PiecesSelectionHandler : MonoBehaviour
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask)
             || !hit.collider.TryGetComponent(out PieceSelectionHandler piece)) return;
-        
+        if (!isLocal && !piece.PieceNet.hasAuthority)
+        {
+            return;
+        }
         if (SelectedPiece) OnPieceDeselected?.Invoke(SelectedPiece);
         SelectedPiece = piece;
         OnPieceSelected?.Invoke(SelectedPiece);
